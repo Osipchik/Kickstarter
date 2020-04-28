@@ -1,0 +1,97 @@
+﻿@model Identity.API.Models.ManageViewModels.LoginRegisterViewModel
+<link rel="stylesheet" href="~/css/login-register.css"/>
+<partial name="_ValidationSummary" />
+
+<div class="new-container mx-auto @(Model.IsRegisterRequest ? "right-panel-active" : "")" id="container">
+	<div class="form-new-container sign-up-new-container">
+		<form asp-controller="Account" asp-action="Register">
+			@Html.AntiForgeryToken()
+			<input type="hidden" asp-for="ReturnUrl"/>
+
+			<h1 class="title">Create Account</h1>
+			<div class="social-new-container">
+				@foreach (var provider in Model.VisibleExternalProviders)
+				{
+					<a class="social"
+					   asp-controller="External"
+					   asp-action="Challenge"
+					   asp-route-provider="@provider.AuthenticationScheme"
+					   asp-route-returnUrl="@Model.ReturnUrl">
+						@switch (provider.DisplayName)
+						{
+							case "Facebook":
+								<i class="fab fa-facebook-f"></i>
+								break;
+							case "Google":
+								<i class="fab fa-google"></i>
+								break;
+							case "Yandex":
+								<i class="fab fa-yandex-international"></i>
+								break;
+							case "Vkontakte":
+								<i class="fab fa-vk"></i>
+								break;
+						}
+					</a>
+				}
+			</div>
+			<span>or use your email for registration</span>
+			<input asp-for="Name" type="text" class="form-control" placeholder="Name"/>
+			<input asp-for="UserName" type="email" class="form-control" placeholder="Username" autofocus>
+			<input asp-for="Password" type="password" class="form-control" placeholder="Password" autocomplete="off">
+			<button>Sign Up</button>
+		</form>
+	</div>
+	<div class="form-new-container sign-in-new-container">
+		<form asp-controller="Account" asp-action="Login">
+			@Html.AntiForgeryToken()
+			<input type="hidden" asp-for="ReturnUrl" />
+			
+			<h1 class="title">Sign in</h1>
+			<div class="social-new-container">
+				@foreach (var provider in Model.VisibleExternalProviders)
+				{
+					<a class="social"
+					   asp-controller="External"
+                       asp-action="Challenge"
+                       asp-route-provider="@provider.AuthenticationScheme"
+					   asp-route-returnUrl="@Model.ReturnUrl">
+						@switch (provider.DisplayName)
+                        	{
+								case "Facebook": <i class="fab fa-facebook-f"></i>
+                        			break;
+                        		case "Google": <i class="fab fa-google"></i>
+                        			break;
+                        		case "Yandex": <i class="fab fa-yandex-international"></i>
+                        			break;
+                        		case "Vkontakte": <i class="fab fa-vk"></i>
+                        			break;
+                        	}
+					</a>
+				}
+			</div>
+			<span>or use your account</span>
+			<input type="email" class="form-control" placeholder="Username" asp-for="UserName" autofocus>
+			<input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
+		
+			<a href="#">Forgot your password?</a>
+			<button name="button" value="login">Sign In</button>
+		</form>
+	</div>
+	<div class="overlay-new-container">
+		<div class="overlay">
+			<div class="overlay-panel overlay-left">
+				<h1 class="title">Welcome Back!</h1>
+				<p class="sub-title">To keep connected with us please login with your personal info</p>
+				<button class="ghost" id="signIn">Sign In</button>
+			</div>
+			<div class="overlay-panel overlay-right">
+				<h1 class="title">Hello, Friend!</h1>
+				<p class="sub-title">Enter your personal details and start journey with us</p>
+				<button class="ghost" id="signUp">Sign Up</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<script src="~/js/login-register.js"></script>
