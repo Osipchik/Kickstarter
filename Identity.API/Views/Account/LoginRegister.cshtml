@@ -20,16 +20,16 @@
 						@switch (provider.DisplayName)
 						{
 							case "Facebook":
-								<i class="fab fa-facebook-f"></i>
+								<i class="fab fa-facebook-f social"></i>
 								break;
 							case "Google":
-								<i class="fab fa-google"></i>
+								<i class="fab fa-google social"></i>
 								break;
 							case "Yandex":
-								<i class="fab fa-yandex-international"></i>
+								<i class="fab fa-yandex-international social"></i>
 								break;
 							case "Vkontakte":
-								<i class="fab fa-vk"></i>
+								<i class="fab fa-vk social"></i>
 								break;
 						}
 					</a>
@@ -58,13 +58,13 @@
 					   asp-route-returnUrl="@Model.ReturnUrl">
 						@switch (provider.DisplayName)
                         	{
-								case "Facebook": <i class="fab fa-facebook-f"></i>
+								case "Facebook": <i class="fab fa-facebook-f social"></i>
                         			break;
-                        		case "Google": <i class="fab fa-google"></i>
+                        		case "Google": <i class="fab fa-google social"></i>
                         			break;
-                        		case "Yandex": <i class="fab fa-yandex-international"></i>
+                        		case "Yandex": <i class="fab fa-yandex-international social"></i>
                         			break;
-                        		case "Vkontakte": <i class="fab fa-vk"></i>
+                        		case "Vkontakte": <i class="fab fa-vk social "></i>
                         			break;
                         	}
 					</a>
@@ -74,7 +74,7 @@
 			<input type="email" class="form-control" placeholder="Username" asp-for="UserName" autofocus>
 			<input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
 		
-			<a href="#">Forgot your password?</a>
+			<a asp-action="ForgotPassword" class="forgot-link">Forgot your password?</a>
 			<button name="button" value="login">Sign In</button>
 		</form>
 	</div>

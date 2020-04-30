@@ -38,7 +38,19 @@ span {
 }
 
 a {
-    color: #333;
+    color: #333!important;
+    text-decoration: none;
+    font-size: 14px;
+    margin: 15px 0;
+}
+
+.forgot-link{
+    text-decoration: underline!important;
+    color: #009688!important;
+}
+
+a:hover, forgot-link:hover{
+    color: #05ce78 !important;
     font-size: 14px;
     text-decoration: none;
     margin: 15px 0;
@@ -92,8 +104,7 @@ input {
 .new-container {
     background-color: #fff;
     border-radius: 10px;
-    box-shadow: 0 14px 28px rgba(0,0,0,0.25),
-    0 10px 10px rgba(0,0,0,0.22);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
     position: relative;
     overflow: hidden;
     width: 768px;
@@ -160,9 +171,6 @@ input {
 }
 
 .overlay {
-    /*background: #FF416C;*/
-    /*background: -webkit-linear-gradient(to right, #FF4B2B, #FF416C);*/
-    /*background: linear-gradient(to right, #FF4B2B, #FF416C);*/
     background: #05ce78;
     background: -webkit-linear-gradient(to right, #4CAF50, #009688);
     background: linear-gradient(to right, #4CAF50, #009688);
@@ -227,4 +235,19 @@ input {
     margin: 0 5px;
     height: 40px;
     width: 40px;
+}
+
+.social{
+    -webkit-transition: box-shadow 0.2s ease-in, color 0.1s ease-in;
+    -moz-transition: box-shadow 0.2s ease-in, color 0.1s ease-in;
+    -o-transition: box-shadow 0.2s ease-in, color 0.1s ease-in;
+    transition: box-shadow 0.2s ease-in, color 0.1s ease-in;
+}
+
+.social:hover{
+    color: #009688!important;
+    text-decoration: none!important;
+    -webkit-box-shadow: 0 5px 21px -8px rgba(0,0,0,0.75);
+    -moz-box-shadow: 0 5px 21px -8px rgba(0,0,0,0.75);
+    box-shadow: 0 5px 21px -8px rgba(0,0,0,0.75);
 }

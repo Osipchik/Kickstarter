@@ -9,7 +9,7 @@ namespace Identity.API.Infrastructure
     {
         public static void Initialize(UsersContext context)
         {
-            context.Database.EnsureDeleted();
+            //context.Database.EnsureDeleted();
             context.Database.EnsureCreated();
             
             if (context.ApplicationUsers.Any())

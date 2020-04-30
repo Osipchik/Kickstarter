@@ -19,7 +19,7 @@ using ApplicationUser = Identity.API.Models.ApplicationUser;
 
 namespace Identity.API.Controllers
 {
-   [SecurityHeaders]
+    [SecurityHeaders]
     [AllowAnonymous]
     public class ExternalController : Controller
     {

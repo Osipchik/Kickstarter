@@ -1,6 +1,7 @@
 using Identity.API.Configuration;
 using Identity.API.Infrastructure;
 using Identity.API.Models;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -25,8 +26,18 @@ namespace Identity.API
             // TODO: delete runtime
             services.AddControllersWithViews().AddRazorRuntimeCompilation();
             
+            services.AddCors();
+            
             services.AddDbContext<UsersContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            
+            services.AddMassTransit(x =>
+            {
+                x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
+                {
+                    cfg.Host("rabbitmq://localhost");
+                }));
+            });
             
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<UsersContext>()
@@ -86,13 +97,13 @@ namespace Identity.API
                 app.UseHsts();
             }
 
-            app.UseCors(o => o.AllowAnyHeader().AllowAnyOrigin().AllowAnyOrigin());
-            
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
 
+            app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+            
             app.UseAuthentication();
             app.UseAuthorization();
             app.UseIdentityServer();

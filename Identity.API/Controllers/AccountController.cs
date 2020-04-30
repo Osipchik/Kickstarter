@@ -4,7 +4,6 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Identity.API.Configuration;
 using Identity.API.Extensions;
-using Identity.API.Infrastructure;
 using Identity.API.Models.AccountViewModels;
 using Identity.API.Models.ManageViewModels;
 using IdentityModel;
@@ -13,6 +12,8 @@ using IdentityServer4.Events;
 using IdentityServer4.Extensions;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
+using MassTransit;
+using Messages;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -32,7 +33,7 @@ namespace Identity.API.Controllers
         private readonly IClientStore _clientStore;
         private readonly IAuthenticationSchemeProvider _schemeProvider;
         private readonly IEventService _events;
-        private readonly UsersContext _context;
+        private readonly IBusControl _bus;
 
         public AccountController(
             UserManager<ApplicationUser> userManager,
@@ -40,8 +41,8 @@ namespace Identity.API.Controllers
             IIdentityServerInteractionService interaction,
             IClientStore clientStore,
             IAuthenticationSchemeProvider schemeProvider,
-            UsersContext context,
-            IEventService events)
+            IEventService events,
+            IBusControl bus)
         {
             _userManager = userManager;
             _signInManager = signInManager;
@@ -49,25 +50,19 @@ namespace Identity.API.Controllers
             _clientStore = clientStore;
             _schemeProvider = schemeProvider;
             _events = events;
-            _context = context;
+            _bus = bus;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> SignUp(string email, string name, string password)
+        
+        public async Task<IActionResult> Send()
         {
-            var user = new ApplicationUser {Email = email, Name = name, UserName = email};
-            var result = await _userManager.CreateAsync(user, password);
+            var endpoint = await _bus.GetSendEndpoint(new Uri($"rabbitmq://localhost/MailService"));
+            await endpoint.Send(new MailMessage("nTavvka@yandex.ru", "asd", "nTavvka@yandex.ru"));
             
-            if (result.Succeeded)
-            {
-                await _userManager.AddClaimAsync(user, new Claim("userName", user.UserName));
-                await _userManager.AddClaimAsync(user, new Claim("name", user.Name));
-                await _userManager.AddClaimAsync(user, new Claim("email", user.Email));
-            }
-
-            return Ok(result.Errors);
+            return View("Login", await BuildLoginViewModelAsync(""));
         }
-
+        
+        
         [HttpGet]
         public async Task<IActionResult> Register(string returnUrl)
         {
@@ -89,9 +84,9 @@ namespace Identity.API.Controllers
             
                 if (result.Succeeded)
                 {
-                    await SendEmail(user);
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Name, user.Name));
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Email, user.Email));
+                    await SendConfirmAccountEmail(user);
                     
                     if (!string.IsNullOrEmpty(model.ReturnUrl))
                     {
@@ -127,9 +122,10 @@ namespace Identity.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> ConfirmEmail(string userId, string token)
+        [AllowAnonymous]
+        public async Task<IActionResult> ConfirmEmail(string userId, string code)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
             {
                 return RedirectToAction("Index", "Home");
             }
@@ -141,7 +137,7 @@ namespace Identity.API.Controllers
                 return View("Error");
             }
 
-            var result = await _userManager.ConfirmEmailAsync(user, token);
+            var result = await _userManager.ConfirmEmailAsync(user, code);
             if (result.Succeeded)
             {
                 return RedirectToAction("Index", "Home");
@@ -245,6 +241,19 @@ namespace Identity.API.Controllers
 
         [HttpGet]
         public IActionResult AccessDenied()
+        {
+            return View();
+        }
+
+        [HttpGet]
+        public IActionResult ForgotPassword()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult ForgotPassword(ForgotPasswordViewModel model)
         {
             return View();
         }
@@ -367,14 +376,15 @@ namespace Identity.API.Controllers
             return vm;
         }
 
-        private async Task SendEmail(ApplicationUser user)
+        private async Task SendConfirmAccountEmail(ApplicationUser user)
         {
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            var confirmLink = Url.Action("ConfirmEmail", "Account", new {userId = user.Id, token = token},
-                Request.Scheme);
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var callbackUrl = Url.Action(
+                "ConfirmEmail", "Account",
+                new { userId = user.Id, code = code }, HttpContext.Request.Scheme);
             
-            var service = new EmailService();
-            await service.SendEmail(user.Email, "confirm", confirmLink);
+            var endpoint = await _bus.GetSendEndpoint(new Uri($"rabbitmq://localhost/MailService"));
+            await endpoint.Send(new MailMessage(user.Email, user.Name, callbackUrl));
         }
     }
 }
