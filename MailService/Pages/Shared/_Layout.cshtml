@@ -1,0 +1,148 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kickstarter</title>
+    <style type="text/css">
+        @@media screen {
+        @@font-face {
+                font-family: 'Lato';
+                font-style: normal;
+                font-weight: 400;
+                src: local('Lato Regular'), local('Lato-Regular'), url(https://fonts.gstatic.com/s/lato/v11/qIIYRU-oROkIk8vfvxw6QvesZW2xOQ-xsNqO47m55DA.woff) format('woff');
+            }
+        @@font-face {
+                font-family: 'Lato';
+                font-style: normal;
+                font-weight: 700;
+                src: local('Lato Bold'), local('Lato-Bold'), url(https://fonts.gstatic.com/s/lato/v11/qdgUG4U09HnJwhYI-uK18wLUuEpTyoUstqEm5AMlJo4.woff) format('woff');
+            }
+        @@font-face {
+                font-family: 'Lato';
+                font-style: italic;
+                font-weight: 400;
+                src: local('Lato Italic'), local('Lato-Italic'), url(https://fonts.gstatic.com/s/lato/v11/RYyZNoeFgb0l7W3Vu1aSWOvvDin1pK8aKteLpeZ5c0A.woff) format('woff');
+            }
+        @@font-face {
+                font-family: 'Lato';
+                font-style: italic;
+                font-weight: 700;
+                src: local('Lato Bold Italic'), local('Lato-BoldItalic'), url(https://fonts.gstatic.com/s/lato/v11/HkF_qI1x_noxlxhrhMQYELO3LdcAZYWl9Si6vvxL-qU.woff) format('woff');
+            }
+        }
+        
+        a {
+            color: #FFF !important;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background-color: #00796B;
+            border-color: #00796B;
+            border-radius: 5px;
+            padding: 0.8rem 1rem;
+            display: block;
+            width: fit-content;
+            margin: 0 auto;
+            -webkit-transition: transform 80ms ease-in, box-shadow 0.3s ease-in, background-color 0.3s ease-in;
+            -moz-transition: transform 80ms ease-in, box-shadow 0.3s ease-in, background-color 0.3s ease-in;
+            -o-transition: transform 80ms ease-in, box-shadow 0.3s ease-in, background-color 0.3s ease-in;
+            transition: transform 80ms ease-in, box-shadow 0.3s ease-in, background-color 0.3s ease-in;
+        }
+
+
+        .btn-primary:hover {
+            background-color: #4CAF50;
+            border-color: #4CAF50 !important;
+            -webkit-box-shadow: 0 7px 20px -5px rgba(0,0,0,0.75);
+            -moz-box-shadow: 0 7px 20px -5px rgba(0,0,0,0.75);
+            box-shadow: 0 7px 20px -5px rgba(0,0,0,0.75);
+        }
+        
+        .btn-primary:active {
+            transform: scale(0.95);
+        }
+
+        html {
+            font-size: 14px;
+        }
+
+        @@media (min-width: 768px) {
+            html {
+                font-size: 16px;
+            }
+        }
+
+        button.accept-policy {
+            font-size: 1rem;
+            line-height: inherit;
+            font-family: Lato;
+        }
+
+        html {
+            position: relative;
+            min-height: 100%;
+            font-family: Lato;
+        }
+
+        .container {
+            max-width: 40rem;
+            min-width: 20rem;
+            border: 1px solid #E0E0E0;
+            border-radius: 4px;
+            box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+        }
+
+
+        hr {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+            border: 0;
+            border-top: 1px solid #E0E0E0;
+        }
+
+        .t-24{
+            font-size: 24px;
+            font-weight: 500;
+            font-family: Lato;
+            color: #212121;
+        }
+
+        .t-16{
+            font-size: 16px;
+            font-weight: 400;
+            font-family: Lato;
+            color: #616161;
+        }
+        
+        .mt{
+            margin-top: 2rem;
+        }
+        
+        h2{
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        
+        .text-muted{
+            color: #757575;
+        }
+        
+        .p{
+            padding: 20px 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container border shadow p">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
+
+</body>
+</html>
