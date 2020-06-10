@@ -1,14 +1,25 @@
-﻿@model Identity.API.Models.ManageViewModels.LoginRegisterViewModel
+﻿@model Identity.API.Models.AccountViewModels.RegisterInputModel
+<link rel="stylesheet" href="~/css/login.css"/>
 
-<div class="login-page">
-    <div class="page-header">
-        <h1>Login</h1>
-    </div>
+<div class="new-container mx-auto">
+	<div class="form-new-container sign-up-new-container">
+		<form asp-controller="Account" asp-action="Register">
+			@Html.AntiForgeryToken()
+			<input type="hidden" asp-for="ReturnUrl"/>
+    
+			<h1 class="title">Create Account</h1>
 
-    <partial name="_ValidationSummary" />
-
-    <div class="row">
-
-        
-    </div>
+			<input asp-for="Name" type="text" class="form-control" placeholder="Name"/>
+			<span asp-validation-for="Name"  class="text-right text-danger"></span>
+			<input asp-for="UserName" type="email" class="form-control" placeholder="Username" autofocus>
+			<span asp-validation-for="UserName" class="text-right text-danger"></span>
+			<input asp-for="Password" type="password" class="form-control" placeholder="Password" autocomplete="off">
+			<span asp-validation-for="Password" class="text-right text-danger"></span>
+    			
+			<button>Sign Up</button>
+		</form>
+		<div class="message text-center">
+			<p>Have an account?<a asp-action="Login" class="link">Sign In!</a></p>
+		</div>
+	</div>
 </div>

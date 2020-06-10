@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using EventBus.Events;
 using Identity.API.Configuration;
 using Identity.API.Extensions;
 using Identity.API.Models.AccountViewModels;
@@ -13,7 +14,6 @@ using IdentityServer4.Extensions;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
 using MassTransit;
-using Messages;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -53,31 +53,19 @@ namespace Identity.API.Controllers
             _bus = bus;
         }
 
-        
-        public async Task<IActionResult> Send()
-        {
-            var endpoint = await _bus.GetSendEndpoint(new Uri($"rabbitmq://localhost/MailService"));
-            await endpoint.Send(new MailMessage("nTavvka@yandex.ru", "asd", "nTavvka@yandex.ru"));
-            
-            return View("Login", await BuildLoginViewModelAsync(""));
-        }
-        
-        
         [HttpGet]
-        public async Task<IActionResult> Register(string returnUrl)
+        public IActionResult Register(string returnUrl)
         {
-            var vm = await BuildLoginViewModelAsync(returnUrl);
-            vm.IsRegisterRequest = true;
+            var vm = new RegisterInputModel{ReturnUrl = returnUrl};
 
-            return View("LoginRegister", vm);
+            return View("Register", vm);
         }
         
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(LoginRegisterInputModel model)
+        public async Task<IActionResult> Register(RegisterInputModel model)
         {
-            var isNameValid = !string.IsNullOrWhiteSpace(model.Name);
-            if (ModelState.IsValid && isNameValid)
+            if (ModelState.IsValid)
             {
                 var user = new ApplicationUser{Email = model.UserName, Name = model.Name, UserName = model.UserName};
                 var result = await _userManager.CreateAsync(user, model.Password);
@@ -86,13 +74,10 @@ namespace Identity.API.Controllers
                 {
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Name, user.Name));
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Email, user.Email));
-                    await SendConfirmAccountEmail(user);
+                    
+                    await SendEmail(user, "ConfirmAccount");
                     
                     if (!string.IsNullOrEmpty(model.ReturnUrl))
-                    {
-                        return Redirect(model.ReturnUrl);
-                    }
-                    if (Url.IsLocalUrl(model.ReturnUrl))
                     {
                         return Redirect(model.ReturnUrl);
                     }
@@ -101,31 +86,19 @@ namespace Identity.API.Controllers
                         return Redirect("~/");
                     }
                 }
-                
-                ModelState.AddModelError(string.Empty, "this email is already exist");
+                ModelState.AddModelError("UserName", "This email is already exist.");
             }
 
-            if (!ModelState.IsValid)
-            {
-                ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
-            }
-            
-            if (!isNameValid)
-            {
-                ModelState.AddModelError(string.Empty, "Name is required");
-            }
+            ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
 
-            var vm = await BuildLoginViewModelAsync(model);
-            vm.IsRegisterRequest = true;
-            
-            return View("LoginRegister", vm);
+            return View("Register", model);
         }
 
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> ConfirmEmail(string userId, string code)
+        public async Task<IActionResult> ConfirmEmail(string userId, string token)
         {
-            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(code))
+            if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(token))
             {
                 return RedirectToAction("Index", "Home");
             }
@@ -137,7 +110,7 @@ namespace Identity.API.Controllers
                 return View("Error");
             }
 
-            var result = await _userManager.ConfirmEmailAsync(user, code);
+            var result = await _userManager.ConfirmEmailAsync(user, token);
             if (result.Succeeded)
             {
                 return RedirectToAction("Index", "Home");
@@ -149,7 +122,7 @@ namespace Identity.API.Controllers
         [HttpGet]
         public async Task<IActionResult> Login(string returnUrl)
         {
-            return View("LoginRegister", await BuildLoginViewModelAsync(returnUrl));
+            return View("Login", await BuildLoginViewModelAsync(returnUrl));
         }
         
         [HttpPost]
@@ -200,7 +173,7 @@ namespace Identity.API.Controllers
                 ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
             }
         
-            return View("LoginRegister", await BuildLoginViewModelAsync(model));
+            return View("Login", await BuildLoginViewModelAsync(model));
         }
 
         [HttpGet]
@@ -246,29 +219,85 @@ namespace Identity.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult ForgotPassword()
+        public IActionResult ForgotPassword(string returnUrl)
         {
-            return View();
+            return View(new ForgotPasswordViewModel{ReturnUrl = returnUrl});
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult ForgotPassword(ForgotPasswordViewModel model)
+        public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
         {
-            return View();
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user != null && await _userManager.IsEmailConfirmedAsync(user))
+                {
+                    await SendEmail(user, "PasswordReset");
+                    return View();
+                }
+                
+                return Redirect(model.ReturnUrl);
+            }
+            
+            ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
+
+            return View(model);
+        }
+
+        [HttpGet]
+        [AllowAnonymous]
+        public IActionResult ResetPassword(string userId, string token)
+        {
+            if (!string.IsNullOrEmpty(userId) || !string.IsNullOrEmpty(token))
+            {
+                ModelState.AddModelError("", "Invalid password reset token");
+            }
+            
+            return View(new ResetPasswordViewModel{Token = token, UserId = userId});
+        }
+
+        [HttpPost]
+        [AllowAnonymous]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByIdAsync(model.UserId);
+                if (user != null)
+                {
+                    var result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    foreach (var error in result.Errors)
+                    {
+                        ModelState.AddModelError("", error.Description);
+                    }
+
+                    return View(model);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+            
+            return View(model);
         }
         
         /*****************************************/
         /* helper APIs for the AccountController */
         /*****************************************/
-        private async Task<LoginRegisterViewModel> BuildLoginViewModelAsync(string returnUrl)
+        private async Task<LoginViewModel> BuildLoginViewModelAsync(string returnUrl)
         {
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
             if (context?.IdP != null && await _schemeProvider.GetSchemeAsync(context.IdP) != null)
             {
                 var local = context.IdP == IdentityServerConstants.LocalIdentityProvider;
 
-                var vm = new LoginRegisterViewModel
+                var vm = new LoginViewModel
                 {
                     EnableLocalLogin = local,
                     ReturnUrl = returnUrl,
@@ -310,7 +339,7 @@ namespace Identity.API.Controllers
                 }
             }
 
-            return new LoginRegisterViewModel
+            return new LoginViewModel
             {
                 EnableLocalLogin = allowLocal && AccountOptions.AllowLocalLogin,
                 ReturnUrl = returnUrl,
@@ -319,7 +348,7 @@ namespace Identity.API.Controllers
             };
         }
 
-        private async Task<LoginRegisterViewModel> BuildLoginViewModelAsync(LoginRegisterInputModel model)
+        private async Task<LoginViewModel> BuildLoginViewModelAsync(LoginRegisterInputModel model)
         {
             var vm = await BuildLoginViewModelAsync(model.ReturnUrl);
             vm.UserName = model.UserName;
@@ -376,15 +405,39 @@ namespace Identity.API.Controllers
             return vm;
         }
 
-        private async Task SendConfirmAccountEmail(ApplicationUser user)
+        private async Task SendEmail(ApplicationUser user, string type)
         {
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var endpoint = await _bus.GetSendEndpoint(new Uri($"rabbitmq://localhost/MailService"));
+            await endpoint.Send(await BuildMailMessage(user, type));
+        }
+
+        private ValueTask<MailMessage> BuildMailMessage(ApplicationUser user, string type)
+        {
+            return type switch
+            {
+                "ConfirmAccount" => BuildConfirmEmail(user),
+                "PasswordReset" => BuildPasswordResetEmail(user),
+            };
+        }
+        
+        private async ValueTask<MailMessage> BuildConfirmEmail(ApplicationUser user)
+        {
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
             var callbackUrl = Url.Action(
                 "ConfirmEmail", "Account",
-                new { userId = user.Id, code = code }, HttpContext.Request.Scheme);
+                new { userId = user.Id, token = token }, HttpContext.Request.Scheme);
             
-            var endpoint = await _bus.GetSendEndpoint(new Uri($"rabbitmq://localhost/MailService"));
-            await endpoint.Send(new MailMessage(user.Email, user.Name, callbackUrl));
+            return new MailMessage(user.Email, user.Name, callbackUrl, "ConfirmAccount");
+        }
+        
+        private async ValueTask<MailMessage> BuildPasswordResetEmail(ApplicationUser user)
+        {
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            var callbackUrl = Url.Action(
+                "ResetPassword", "Account",
+                new { userId = user.Id, token = token }, HttpContext.Request.Scheme);
+            
+            return new MailMessage(user.Email, user.Name, callbackUrl, "PasswordReset");
         }
     }
 }

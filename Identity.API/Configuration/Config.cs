@@ -7,9 +7,9 @@ namespace Identity.API.Configuration
 {
     public class Config
     {
-        //private const string ClientOrigin = "http://localhost:3000";
+        // private const string ClientOrigin = "http://localhost:3000";
 
-        private const string ClientOrigin = "https://www.getpostman.com";
+        // private const string ClientOrigin = "https://www.getpostman.com";
 
         public static IEnumerable<IdentityResource> GetResources =>
             new List<IdentityResource>
@@ -26,24 +26,20 @@ namespace Identity.API.Configuration
                 new ApiResource("funding", "Funding Service"),
                 new ApiResource("comment", "Comment Service")
             };
-
+//clientIds["JsClientId"]
         public static IEnumerable<Client> Clients(IConfigurationSection clientIds)
         {
             return new List<Client>
             {
                 new Client
                 {
-                    ClientId = clientIds["JsClientId"],
+                    ClientId = "jsClient",
                     ClientName = "Kickstarter React Client",
-                    AllowedGrantTypes = GrantTypes.Code,
-                    AllowAccessTokensViaBrowser = true,
-                    RequirePkce = true,
-                    RequireConsent = false,
                     
-                    // RedirectUris = { $"{ClientOrigin}/callback" },
-                    RedirectUris = { "https://www.getpostman.com/oauth2/callback" },
-                    PostLogoutRedirectUris = { ClientOrigin },
-                    AllowedCorsOrigins = { ClientOrigin },
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequirePkce = true,
+                    RequireClientSecret = false,
+
                     EnableLocalLogin = true,
                     
                     AllowedScopes =
@@ -56,7 +52,12 @@ namespace Identity.API.Configuration
                         "roles",
                         "funding",
                         "comment"
-                    }
+                    },
+                    RedirectUris = { "https://localhost:3000/auth-callback", "https://localhost:3000/silent_renew.html" },
+                    PostLogoutRedirectUris = { "https://localhost:3000/" },
+
+                    AllowedCorsOrigins = { "https://localhost:3000" },
+                    AllowAccessTokensViaBrowser = true,
                 },
                 new Client
                 {

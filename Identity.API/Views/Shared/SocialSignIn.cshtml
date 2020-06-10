@@ -1,0 +1,29 @@
+﻿@model Identity.API.Models.ManageViewModels.LoginViewModel
+
+<div class="social-new-container">
+	@foreach (var provider in Model.VisibleExternalProviders)
+	{
+		<a class="social"
+		   asp-controller="External"
+		   asp-action="Challenge"
+		   asp-route-provider="@provider.AuthenticationScheme"
+		   asp-route-returnUrl="@Model.ReturnUrl">
+			@switch (provider.DisplayName)
+			{
+				case "Facebook":
+					<i class="fab fa-facebook-f social"></i>
+					break;
+				case "Google":
+					<i class="fab fa-google social"></i>
+					break;
+				case "Yandex":
+					<i class="fab fa-yandex-international social"></i>
+					break;
+				case "Vkontakte":
+					<i class="fab fa-vk social"></i>
+					break;
+			}
+		</a>
+	}
+</div>
+

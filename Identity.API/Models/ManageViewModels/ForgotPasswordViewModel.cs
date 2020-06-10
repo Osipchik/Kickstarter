@@ -7,5 +7,6 @@ namespace Identity.API.Models.ManageViewModels
         [Required]
         [EmailAddress]
         public string Email { get; set; }
+        public string ReturnUrl { get; set; }
     }
 }

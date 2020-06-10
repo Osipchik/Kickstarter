@@ -1,66 +1,29 @@
-@model Identity.API.Models.ManageViewModels.LoginRegisterViewModel
+@model Identity.API.Models.ManageViewModels.LoginViewModel
 <link rel="stylesheet" href="~/css/login.css"/>
 
-<partial name="_ValidationSummary" />
-
-<div class="panel panel-default">
-    <div class="panel-heading">
-        <h3 class="panel-title">Local Login</h3>
-    </div>
-    <div class="panel-body">
-        <form asp-route="Login">
-            <input type="hidden" asp-for="ReturnUrl" />
-        
-            <fieldset>
-                <div class="form-group">
-                    <label asp-for="UserName"></label>
-                    <input class="form-control" placeholder="Username" asp-for="UserName" autofocus>
-                </div>
-                <div class="form-group">
-                    <label asp-for="Password"></label>
-                    <input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
-                </div>
-@*                 @if (Model.AllowRememberLogin) *@
-@*                 { *@
-@*                     <div class="form-group login-remember"> *@
-@*                         <label asp-for="RememberLogin"> *@
-@*                             <input asp-for="RememberLogin"> *@
-@*                             <strong>Remember My Login</strong> *@
-@*                         </label> *@
-@*                     </div> *@
-@*                 } *@
-                <div class="form-group">
-                    <button class="btn btn-primary" name="button" value="login">Login</button>
-                </div>
-            </fieldset>
-        </form>
-    </div>
+<div class="new-container mx-auto">
+	<div class="form-new-container sign-in-new-container">
+		<form asp-controller="Account" asp-action="Login">
+			@Html.AntiForgeryToken()
+			
+			<input type="hidden" asp-for="ReturnUrl" />
+			
+			<h1 class="title">Sign in</h1>
+			<partial name="SocialSignIn" model="Model"/>
+			<span>or use your account</span>
+			
+			<input type="email" class="form-control" placeholder="Username" asp-for="UserName" autofocus>
+			<span asp-validation-for="UserName" class="text-right text-danger"></span>
+			<input type="password" class="form-control" placeholder="Password" asp-for="Password" autocomplete="off">
+			<span asp-validation-for="Password" class="text-right text-danger"></span>
+			
+			<a asp-action="ForgotPassword" class="link">Forgot your password?</a>
+			
+			<button name="button" value="login">Sign In</button>
+			
+		</form>
+		<div class="message text-center">
+			<p >Don't have an account?<a asp-action="Register" class="link">Sign Up!</a></p>
+		</div>
+	</div>
 </div>
-
-
-@if (Model.VisibleExternalProviders.Any())
-         {
-             <div class="col-md-6 col-sm-6 external-providers">
-                 <div class="panel panel-default">
-                     <div class="panel-heading">
-                         <h3 class="panel-title">External Login</h3>
-                     </div>
-                     <div class="panel-body">
-                         <ul class="list-inline">
-                             @foreach (var provider in Model.VisibleExternalProviders)
-                             {
-                                 <li>
-                                     <a class="btn btn-primary"
-                                        asp-controller="External"
-                                        asp-action="Challenge"
-                                        asp-route-provider="@provider.AuthenticationScheme"
-                                        asp-route-returnUrl="@Model.ReturnUrl">
-                                         @provider.DisplayName
-                                     </a>
-                                 </li>
-                             }
-                         </ul>
-                     </div>
-                 </div>
-             </div>
-         }
