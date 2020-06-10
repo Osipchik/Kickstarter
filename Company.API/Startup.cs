@@ -1,4 +1,7 @@
+using AutoMapper;
+using Company.API.CloudStorage;
 using Company.API.Infrastructure;
+using Company.API.Repositories;
 using GreenPipes;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
@@ -7,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Newtonsoft.Json;
 
 namespace Company.API
 {
@@ -21,10 +25,15 @@ namespace Company.API
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
-
+            services.AddControllers().AddNewtonsoftJson(options =>
+                options.SerializerSettings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            );
+            
+            
             services.AddDbContext<ApplicationContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("CompanyDB")));
+
+            services.AddAutoMapper(typeof(Startup));
             
             services.AddMassTransit(x =>
             {
@@ -46,6 +55,9 @@ namespace Company.API
             services.AddMassTransitHostedService();
             
             services.AddSwaggerGen(x => { x.SwaggerDoc("v1", new OpenApiInfo{Title = "Company API", Version = "v1"}); });
+
+            services.AddScoped<PreviewRepository>();
+            services.AddSingleton<ICloudStorage, GoogleCloudStorage>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

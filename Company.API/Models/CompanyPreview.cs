@@ -1,15 +1,19 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Company.API.Infrastructure.Interfaces;
 
 namespace Company.API.Models
 {
-    public class CompanyPreview
+    public class CompanyPreview : IEntity
     {
         public string Id { get; set; }
-        public string CompanyId { get; set; }
         
-        public int Version { get; set; }
+        public string CompanyItemId { get; set; }
+        public CompanyItem CompanyItem { get; set; }
         
-        [DataType(DataType.Url)]
+        public string CompanyFundingId { get; set; }
+        public CompanyFunding CompanyFunding { get; set; }
+        
+        [DataType(DataType.ImageUrl)]
         public string ImageUrl { get; set; }
         
         [DataType(DataType.Url)]

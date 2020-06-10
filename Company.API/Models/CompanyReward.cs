@@ -1,8 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Company.API.Infrastructure.Interfaces;
 
 namespace Company.API.Models
 {
-    public class CompanyReward
+    public class CompanyReward : IEntity
     {
         public string Id { get; set; }
         public string CompanyId { get; set; }

@@ -1,7 +1,8 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using EventBus;
+using EventBus.Events;
 using MassTransit;
-using Messages;
 using Microsoft.EntityFrameworkCore;
 
 namespace Company.API.Infrastructure

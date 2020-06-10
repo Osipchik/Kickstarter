@@ -1,11 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Company.API.Infrastructure;
 using Company.API.Models;
+using EventBus;
+using EventBus.Events;
 using MassTransit;
-using Messages;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace Company.API.Controllers
 {
@@ -28,6 +32,12 @@ namespace Company.API.Controllers
         public async Task<CompanyItem> Get(string id)
         {
             return await _context.CompanyContext.FindAsync(id);
+        }
+
+        [HttpGet]
+        public List<CompanyItem> GetAll()
+        {
+            return _context.CompanyContext.AsNoTracking().ToList();
         }
         
         [HttpPost]
