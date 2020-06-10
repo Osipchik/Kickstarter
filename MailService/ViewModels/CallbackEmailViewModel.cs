@@ -1,11 +1,11 @@
 ﻿namespace MailService.ViewModels
 {
-    public class ConfirmAccountEmailViewModel
+    public class CallbackEmailViewModel
     {
         public string CallbackUrl { get; set; }
         public string Name { get; set; }
         
-        public ConfirmAccountEmailViewModel(string callbackUrl, string name)
+        public CallbackEmailViewModel(string callbackUrl, string name)
         {
             CallbackUrl = callbackUrl;
             Name = name;
