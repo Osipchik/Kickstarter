@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using IBusControl = MassTransit.IBusControl;
 
 namespace Company.API
 {
@@ -23,7 +24,8 @@ namespace Company.API
             try
             {
                 var context = services.GetRequiredService<ApplicationContext>();
-                DbInit.Initialize(context);
+                var bus = services.GetRequiredService<IBusControl>();
+                DbInit.Initialize(context, bus).Wait();
             }
             catch (Exception ex){
                 var logger = services.GetRequiredService<ILogger<Program>>();

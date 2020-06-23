@@ -10,15 +10,21 @@ namespace Company.API.Repositories
     {
         public PreviewRepository(ApplicationContext context) : base(context) {}
         
-        public async Task LoadFundingAsync(CompanyPreview preview)
-        {
-            await Context.Entry(preview)
-                .Reference(i => i.CompanyFunding).LoadAsync();
-        }
+        // public async Task LoadFundingAsync(CompanyPreview preview)
+        // {
+        //     await Context.Entry(preview)
+        //         .Reference(i => i.CompanyFunding).LoadAsync();
+        // }
         
         public new IQueryable<CompanyPreview> FindAll()
         {
-            return Context.PreviewContext.AsNoTracking().Include(i => i.CompanyFunding);
+            return Context.PreviewContext.AsNoTracking();
+        }
+
+        public async Task<CompanyPreview> FindUserPreview(string id, string userId)
+        {
+            var preview = await Find(id);
+            return preview?.OwnerId == userId ? preview : null;
         }
         
         public IQueryable<CompanyPreview> FindByCategory(int categoryId, int subCategoryId)
@@ -26,8 +32,6 @@ namespace Company.API.Repositories
             var previews = subCategoryId > 0
                 ? FindAll().Where(i => i.CategoryId == categoryId && i.SubCategoryId == subCategoryId)
                 : FindAll().Where(i => i.CategoryId == categoryId);
-
-            previews.Include(f => f.CompanyFunding);
             
             return previews;
         }

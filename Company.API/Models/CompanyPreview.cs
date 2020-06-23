@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
+using Company.API.Infrastructure;
 using Company.API.Infrastructure.Interfaces;
 
 namespace Company.API.Models
@@ -7,12 +9,10 @@ namespace Company.API.Models
     {
         public string Id { get; set; }
         
-        public string CompanyItemId { get; set; }
-        public CompanyItem CompanyItem { get; set; }
+        public string OwnerId { get; set; }
         
-        public string CompanyFundingId { get; set; }
-        public CompanyFunding CompanyFunding { get; set; }
-        
+        public string CompanyStoryId { get; set; }
+
         [DataType(DataType.ImageUrl)]
         public string ImageUrl { get; set; }
         
@@ -25,7 +25,21 @@ namespace Company.API.Models
         [StringLength(135, MinimumLength = 2)]
         public string Description { get; set; }
         
+        public CompanyStatus Status { get; set; }
+        
         public int CategoryId { get; set; }
         public int SubCategoryId { get; set; }
+        
+        [DataType(DataType.Currency)]
+        public float Goal { get; set; }
+        
+        [DataType(DataType.Currency)]
+        public float Funded { get; set; }
+        
+        [DataType(DataType.Date)]
+        public DateTime CreationDate { get; set; }
+
+        [DataType(DataType.Date)]
+        public DateTime? EndFundingDate { get; set; }
     }
 }
