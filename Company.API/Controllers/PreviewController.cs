@@ -3,8 +3,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using AutoMapper;
 using Company.API.CloudStorage;
+using Company.API.Infrastructure;
 using Company.API.Repositories;
 using Company.API.ViewModels;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,21 +37,51 @@ namespace Company.API.Controllers
             
             return await previews.Select(i => _mapper.Map<PreviewViewModel>(i)).ToListAsync();
         }
+        
+        [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IEnumerable<UserPreviewViewModel>> GetUserPreviews(string userId)
+        {
+            var previews = _repository.FindAll().Where(i => i.OwnerId == userId);
+            
+            return await previews.Select(i => _mapper.Map<UserPreviewViewModel>(i)).ToListAsync();
+        }
+
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetById(string id)
+        public async Task<IActionResult> GetById(string id, bool auth)
         {
+            if (auth)
+            {
+                return await GetAuthPreviewItem(id);
+            }
+            
             var preview = await _repository.Find(id);
-        
             if (preview == null)
             {
-                return NotFound();
+                return this.NotFoundResponse(id);
+            }
+            
+            return Ok(_mapper.Map<PreviewViewModel>(preview));
+        }
+        
+        private async Task<IActionResult> GetAuthPreviewItem(string id)
+        {
+            var result = await HttpContext.AuthenticateAsync();
+            if (!result.Succeeded)
+            {
+                return Unauthorized();
+            }
+            var preview = await _repository.Find(id);
+            if (preview == null || preview.OwnerId != HttpContext.UserId())
+            {
+                return Forbid();
             }
 
-            await _repository.LoadFundingAsync(preview);
-            
             return Ok(_mapper.Map<PreviewViewModel>(preview));
         }
         
@@ -62,126 +95,71 @@ namespace Company.API.Controllers
             
             return await previews.ToListAsync();
         }
-        
-        [HttpPatch]
+
+        [HttpPost, Authorize]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateDescription(string previewId, string description)
+        public async Task<IActionResult> UpdatePreview([FromBody] PreviewInputModel model)
         {
-            // TODO: get ownerId from accessToken
-        
-            var preview = await _repository.Find(previewId);
+            var preview = await _repository.FindUserPreview(model.Id, HttpContext.UserId());
+
             if (preview == null)
             {
-                return NotFound(new {Message = $"Item with id: {previewId} not found."});
+                return this.NotFoundResponse(model.Id);
             }
-        
-            preview.Description = description;
 
-            await _repository.Update(preview);
+            var previewModel = _mapper.Map<PreviewInputModel>(preview);
 
-            return Ok();
-        }
-
-        [HttpPatch]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateTitle(string previewId, string title)
-        {
-            // TODO: get ownerId from accessToken
-        
-            var preview = await _repository.Find(previewId);
-            if (preview == null)
+            if (previewModel.Equals(model))
             {
-                return NotFound(new {Message = $"Item with id: {previewId} not found."});
-            }
-        
-            preview.Title = title;
-
-            await _repository.Update(preview);
-
-            return Ok();
-        }
-        
-        [HttpPatch]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateCategory(string previewId, int categoryId, int? subCategoryId)
-        {
-            // TODO: get ownerId from accessToken
-           
-            if (categoryId < 0)
-            {
-                return BadRequest();
-            }
-        
-            var preview = await _repository.Find(previewId);
-            if (preview == null)
-            {
-                return NotFound(new {Message = $"Item with id: {previewId} not found."});
-            }
-        
-            preview.CategoryId = categoryId;
-            if (subCategoryId.HasValue && subCategoryId.Value > 0)
-            {
-                preview.SubCategoryId = subCategoryId.Value;
+                return Ok();
             }
 
-            await _repository.Update(preview);
+            preview.Title = model.Title;
+            preview.Description = model.Description;
+            preview.VideoUrl = model.VideoUrl;
+            preview.CategoryId = model.CategoryId;
+            preview.SubCategoryId = model.SubCategoryId;
 
-            return Ok();
-        }
-        
-        [HttpPatch]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> UpdateVideoUrl(string previewId, string videoUrl)
-        {
-            // TODO: get ownerId from accessToken
-            
-            var preview = await _repository.Find(previewId);
-            if (preview == null)
-            {
-                return NotFound(new {Message = $"Item with id: {previewId} not found."});
-            }
-
-            preview.VideoUrl = videoUrl;
             await _repository.Update(preview);
             
-            return Ok();
+            return NoContent();
         }
-        
-        [HttpPatch]
+
+        [HttpPost, Authorize]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public async Task<IActionResult> UpdatePreviewImage(string previewId, IFormFile previewImage)
         {
-            // TODO: get ownerId from accessToken
+            if (previewImage == null)
+            {
+                return Ok();
+            }
             
-            var preview = await _repository.Find(previewId);
+            var userId = HttpContext.UserId();
+            
+            var preview = await _repository.FindUserPreview(previewId, userId);
             if (preview == null || !_cloudStorage.IsFileValid(previewImage))
             {
-                return BadRequest();
+                return this.NotFoundResponse(previewId);
             }
-
+            
             if (!string.IsNullOrEmpty(preview.ImageUrl))
             {
                 await _cloudStorage.DeleteFileAsync(preview.ImageUrl);
             }
             
-            var filename = _cloudStorage.CreateFileName(previewImage, "1");
+            var filename = _cloudStorage.CreateFileName(previewImage, userId);
             preview.ImageUrl = await _cloudStorage.UploadFileAsync(previewImage, filename);
             await _repository.Update(preview);
             
             return Ok(preview.ImageUrl);
         }
 
-        [HttpDelete]
+        [HttpDelete, Authorize]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -190,7 +168,7 @@ namespace Company.API.Controllers
             var preview = await _repository.Find(previewId);
             if (preview == null)
             {
-                return NotFound();
+                return this.NotFoundResponse(previewId);
             }
 
             await _cloudStorage.DeleteFileAsync(preview.ImageUrl);
