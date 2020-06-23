@@ -4,9 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Company.API.Infrastructure;
 using Company.API.Models;
-using EventBus;
 using EventBus.Events;
 using MassTransit;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -28,40 +29,69 @@ namespace Company.API.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<CompanyItem> Get(string id)
+        public async Task<IActionResult> Get(string id, bool auth)
         {
-            return await _context.CompanyContext.FindAsync(id);
-        }
-
-        [HttpGet]
-        public List<CompanyItem> GetAll()
-        {
-            return _context.CompanyContext.AsNoTracking().ToList();
+            if (auth)
+            {
+                return await GetAuthCompanyItem(id);
+            }
+            
+            return Ok(await _context.StoryContext.FindAsync(id));
         }
         
-        [HttpPost]
+        private async Task<IActionResult> GetAuthCompanyItem(string id)
+        {
+            var result = await HttpContext.AuthenticateAsync();
+            if (!result.Succeeded)
+            {
+                return Unauthorized();
+            }
+            var company = await _context.StoryContext.FindAsync(id);
+            if (company == null || company.OwnerId != HttpContext.UserId())
+            {
+                return Forbid();
+            }
+
+            return Ok(company);
+        }
+
+        [HttpPost, Authorize]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> CreateCompany(string ownerId)
+        public async Task<IActionResult> CreateCompany()
         {
-            // TODO: get ownerId from accessToken
-
+            var userId = HttpContext.UserId();
             var companyId = Guid.NewGuid().ToString();
-            await _context.CompanyContext.AddAsync(new CompanyItem
+
+            await _context.StoryContext.AddAsync(new CompanyStory
             {
                 Id = companyId,
-                OwnerId = ownerId,
+                OwnerId = userId,
                 CreationDate = DateTime.Now
             });
             
-            await _context.PreviewContext.AddAsync(new CompanyPreview {Id = Guid.NewGuid().ToString()});
+            await _context.PreviewContext.AddAsync(new CompanyPreview
+            {
+                Id = companyId,
+                OwnerId = userId,
+                CompanyStoryId = companyId,
+                Status = CompanyStatus.Draft
+            });
             await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(Get), new {id = companyId}, null);
+            
+            await _bus.Publish<ICompanyCreated>(new
+            {
+                CompanyId = companyId,
+                UserId = userId
+            });
+            
+            return CreatedAtAction("Get", new {id = companyId}, new {id = companyId});
         }
 
-        [HttpPatch]
+        [HttpPost, Authorize]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -69,7 +99,7 @@ namespace Company.API.Controllers
         {
             // TODO: get ownerId from accessToken
 
-            var company = await _context.CompanyContext.FindAsync(companyId);
+            var company = await _context.StoryContext.FindAsync(companyId);
 
             if (company == null)
             {
@@ -90,7 +120,7 @@ namespace Company.API.Controllers
         {
             // TODO: get ownerId from accessToken
 
-            var company = await _context.CompanyContext.FindAsync(companyId);
+            var company = await _context.StoryContext.FindAsync(companyId);
 
             if (company == null)
             {
@@ -111,7 +141,7 @@ namespace Company.API.Controllers
         {
             // TODO: get ownerId from accessToken
             
-            var company = await _context.CompanyContext.FindAsync(companyId);
+            var company = await _context.StoryContext.FindAsync(companyId);
 
             if (company == null)
             {
@@ -125,15 +155,15 @@ namespace Company.API.Controllers
             var endpoint = await _bus.GetSendEndpoint(uri);
             await endpoint.Send(new CompanyLaunching(companyId, DateTime.Now, 123));
             
-            return CreatedAtAction(nameof(Get), new {id = companyId}, null);;
+            return CreatedAtAction("Get", new {id = companyId}, companyId);;
         }
 
         private NotFoundObjectResult GetNotFoundResponse(string id) =>
             NotFound(new {Message = $"Company with id: {id} not found."});
         
-        private async Task Update(CompanyItem companyItem)
+        private async Task Update(CompanyStory companyStory)
         {
-            _context.CompanyContext.Update(companyItem);
+            _context.StoryContext.Update(companyStory);
             await _context.SaveChangesAsync();
         }
     }
