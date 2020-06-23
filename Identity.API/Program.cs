@@ -1,5 +1,5 @@
 using System;
-using Identity.API.Infrastructure;
+using Identity.API.Data;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,6 +8,10 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+using System.Linq;
+using IdentityServer4.EntityFramework.DbContexts;
+using IdentityServer4.EntityFramework.Mappers;
+using Microsoft.AspNetCore.Builder;
 
 namespace Identity.API
 {
@@ -16,7 +20,7 @@ namespace Identity.API
         public static void Main(string[] args)
         {
             var host = CreateWebHostBuilder(args).Build();
-            CreateDbIfNotExist(host);
+            // CreateDbIfNotExist(host);
             host.Run(); 
         }
 
@@ -26,8 +30,10 @@ namespace Identity.API
             var services = scope.ServiceProvider;
             try
             {
-                var context = services.GetRequiredService<UsersContext>();
-                DbInit.Initialize(context);
+                var context = services.GetRequiredService<AppDbContext>();
+                var app = services.GetRequiredService<IApplicationBuilder>();
+                
+                DbInit.Initialize(app);
             }
             catch (Exception ex){
                 var logger = services.GetRequiredService<ILogger<Program>>();
