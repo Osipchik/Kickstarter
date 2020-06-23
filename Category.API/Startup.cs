@@ -56,6 +56,8 @@ namespace Category.API
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseCors(i => i.AllowAnyOrigin());
+            
             app.UseHttpsRedirection();
 
             app.UseRouting();
