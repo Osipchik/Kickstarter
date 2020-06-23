@@ -1,4 +1,4 @@
-﻿namespace EventBus
+﻿namespace EventBus.Events
 {
     public class CategoryDeletingMessage
     {

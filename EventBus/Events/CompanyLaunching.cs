@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EventBus
+namespace EventBus.Events
 {
     public class CompanyLaunching
     {
