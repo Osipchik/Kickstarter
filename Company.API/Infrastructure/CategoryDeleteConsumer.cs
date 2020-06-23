@@ -1,10 +1,11 @@
 ﻿using System.Linq;
 using System.Threading.Tasks;
+using EventBus;
 using EventBus.Events;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
-namespace Company.API.Infrastructure.Consumers
+namespace Company.API.Infrastructure
 {
     public class CategoryDeleteConsumer : IConsumer<CategoryDeletingMessage>
     {

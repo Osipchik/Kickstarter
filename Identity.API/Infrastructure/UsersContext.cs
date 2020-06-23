@@ -2,12 +2,12 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Identity.API.Data
+namespace Identity.API.Infrastructure
 {
-    public class AppDbContext : IdentityDbContext<ApplicationUser>
+    public class UsersContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<ApplicationUser> ApplicationUsers { get; set; }
 
-        public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
+        public UsersContext(DbContextOptions options) : base(options) { }
     }
 }

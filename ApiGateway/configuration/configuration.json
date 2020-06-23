@@ -1,138 +1,20 @@
 ﻿{
-    "Routes": [
+  "Routes": [
+    {
+      "DownstreamPathTemplate": "/api/v1/Category/GetCategories",
+      "DownstreamScheme": "https",
+      "DownstreamHostAndPorts": [
         {
-            "DownstreamPathTemplate": "/api/v1/Category/GetCategories",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5200"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Category/GetCategories",
-            "UpstreamHttpMethod": [ "GET" ],
-            "FileCacheOptions": {
-                "TtlSeconds": 15,
-                "Region": "CategoryCaching"
-            }
-        },
-        
-        {
-            "DownstreamPathTemplate": "/api/v1/Preview/UpdatePreview",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Preview/UpdatePreview",
-            "UpstreamHttpMethod": [ "POST" ],
-            "AuthenticationOptions": {
-                "AuthenticationProviderKey": "IdentityApiKey",
-                "AllowedScopes": []
-            }
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Preview/UpdatePreviewImage?previewId={previewId}",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Preview/UpdatePreviewImage?previewId={previewId}",
-            "UpstreamHttpMethod": [ "POST" ],
-            "AuthenticationOptions": {
-                "AuthenticationProviderKey": "IdentityApiKey",
-                "AllowedScopes": []
-            }
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Preview/GetPreviews?take={take}&skip={skip}",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Preview/GetPreviews?take={take}&skip={skip}",
-            "UpstreamHttpMethod": [ "GET" ],
-            "FileCacheOptions": {
-                "TtlSeconds": 30,
-                "Region": "PreviewsCaching"
-            }
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Preview/GetUserPreviews?userId={userId}",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Preview/GetUserPreviews?userId={userId}",
-            "UpstreamHttpMethod": [ "GET" ],
-            "FileCacheOptions": {
-                "TtlSeconds": 10,
-                "Region": "PreviewsCaching"
-            }
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Preview/GetById?id={id}&auth={auth}",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Preview/GetById?id={id}&auth={auth}",
-            "UpstreamHttpMethod": [ "GET" ],
-            "FileCacheOptions": {
-                "TtlSeconds": 15,
-                "Region": "PreviewsCaching"
-            }
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Company/CreateCompany",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5101"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Company/CreateCompany",
-            "UpstreamHttpMethod": [ "POST" ]
-        },
-
-        {
-            "DownstreamPathTemplate": "/api/v1/Funding/GetFunding?id={id}&auth={auth}",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5401"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Funding/GetFunding?id={id}&auth={auth}",
-            "UpstreamHttpMethod": [ "GET" ]
-        },
-        {
-            "DownstreamPathTemplate": "/api/v1/Funding/UpdateFunding",
-            "DownstreamScheme": "https",
-            "DownstreamHostAndPorts": [
-                {
-                    "Host": "localhost",
-                    "Port": "5401"
-                }
-            ],
-            "UpstreamPathTemplate": "/api/v1/Funding/UpdateFunding",
-            "UpstreamHttpMethod": [ "POST" ]
+          "Host": "localhost",
+          "Port": "44373"
         }
-    ]
+      ],
+      "UpstreamPathTemplate": "/api/v1/Category/GetCategories",
+      "UpstreamHttpMethod": [ "GET" ],
+      "FileCacheOptions": {
+        "TtlSeconds": 15,
+        "Region": "CategoryCaching"
+      }
+    }
+  ]
 }
