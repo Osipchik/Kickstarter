@@ -1,0 +1,32 @@
+﻿.sub-title-large {
+    font-weight: normal;
+    font-size: 1.15rem;
+    color: #656969;
+}
+
+.title-large {
+    font-weight: 400;
+    font-size: 1.84rem;
+}
+
+.title-small {
+    font-weight: 300;
+    font-size: 1.3rem;
+    color: black;
+}
+
+.text-description {
+    font-weight: 300;
+    font-size: 1.03rem;
+}
+
+.text-description {
+    font-weight: 300;
+    font-size: 1.03rem;
+}
+
+.component-title {
+    font-weight: 300;
+    font-size: 0.95rem;
+    margin-bottom: 0;
+}

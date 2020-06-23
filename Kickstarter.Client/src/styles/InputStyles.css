@@ -1,0 +1,44 @@
+﻿.line-input {
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    position: relative;
+    border: 1px solid var(--grey);
+    padding: 10px 12px;
+    -webkit-transition: border-color 2s, box-shadow 2s, background-color 2s, -webkit-transform 2s;
+    transition: border-color 2s, box-shadow 2s, background-color 2s;
+}
+
+.line-input:hover {
+    background-color: var(--text-input-light);
+    border-color: var(--acid-blue);
+}
+
+.line-input:focus {
+    border-radius: 4px;
+    background-color: inherit;
+    box-shadow: 0 0 0 0.2rem;
+    border-color: var(--dark-red);
+}
+
+.borders {
+    position: relative;
+    border: 1px solid var(--grey);
+    
+    -webkit-transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+    -moz-transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+    -o-transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+    transition: box-shadow 0.3s ease-out, border-color 0.3s ease-out;
+}
+
+.borders:hover {
+    border-color: var(--primary-light);
+}
+
+.borders:focus {
+    border-radius: 4rem;
+    border-color: var(--primary-main);
+
+    -webkit-box-shadow: 0 0 0 4px var(--primary-light);
+    -moz-box-shadow: 0 0 0 4px var(--primary-light);
+    box-shadow: 0 0 0 4px var(--primary-light);
+}

@@ -1,0 +1,21 @@
+﻿.user-account-form {
+    width: 21rem;
+    height: auto;
+}
+
+.shadow {
+    -webkit-box-shadow: 0px 5px 10px -5px var(--shadow-black) !important;
+    -moz-box-shadow: 0px 5px 10px -5px var(--shadow-black) !important;
+    box-shadow: 0px 5px 10px -5px var(--shadow-black) !important;
+    
+    -webkit-transition: box-shadow 0.3s ease-out;
+    -moz-transition: box-shadow 0.3s ease-out;
+    -o-transition: box-shadow 0.3s ease-out;
+    transition: box-shadow 0.3s ease-out;
+}
+
+.shadow:hover {
+    -webkit-box-shadow: 0px 5px 25px -5px var(--shadow-black) !important;
+    -moz-box-shadow: 0px 5px 25px -5px var(--shadow-black) !important;
+    box-shadow: 0px 5px 25px -5px var(--shadow-black) !important
+}

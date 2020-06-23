@@ -1,0 +1,44 @@
+.font {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+.title {
+    font-weight: bold;
+    font-size: 1.8rem;
+}
+
+.title-smaller {
+    font-weight: 400;
+    font-size: 1.5rem;
+}
+
+.sub-title {
+    font-weight: normal;
+    font-size: 1.3rem;
+}
+
+.founded {
+    font-weight: 600;
+    font-size: 1.7rem;
+    margin: 0
+}
+
+@media (max-width: 1199.98px){
+    .founded {
+        font-weight: 600;
+        font-size: 1.25rem;
+        margin: 0
+    }
+}
+
+.text-small {
+    font-weight: normal;
+    font-size: .8rem;
+    margin: 0;
+}
+
+.text-uppercase {
+    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 500;
+}

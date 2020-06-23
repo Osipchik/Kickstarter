@@ -1,0 +1,24 @@
+::-webkit-scrollbar {
+    width: 4px;
+
+    -webkit-transition: background 0.3s ease-out !important;
+    -moz-transition: background 0.3s ease-out !important;
+    -o-transition: background 0.3s ease-out !important;
+    transition: background 0.3s ease-out !important;
+}
+
+::-webkit-scrollbar:hover {
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 6px;
+    background: #BDBDBD;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #757575;
+}

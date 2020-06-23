@@ -1,0 +1,46 @@
+﻿.max-w-8 {
+    max-width: 8rem;
+}
+
+.max-h-12 {
+    max-height: 12rem;
+}
+
+.max-w113 {
+    max-width: 67.8rem;
+}
+
+.wrapper {
+    width: 56rem;
+    height: 31.5rem;
+    overflow: hidden;
+}
+
+.story-media {
+    width: 56rem;
+    height: 31.5rem;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.story-media img {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -o-object-fit: cover;
+    object-fit: cover;
+}
+
+@media (max-width: 1199.98px){
+    .story-media {
+        width: 100%;
+        height: 56.2vw;
+        position: relative;
+        overflow: hidden;
+    }
+
+
+}
