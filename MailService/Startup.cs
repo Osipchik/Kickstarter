@@ -6,6 +6,7 @@ using GreenPipes;
 using MailService.Services;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
@@ -27,6 +28,8 @@ namespace MailService
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddHealthChecks();
+            
             services.AddRazorPages();
             
             services.AddTransient<IRazorViewToStringRenderer, RazorViewToStringRenderer>();
@@ -35,16 +38,19 @@ namespace MailService
             {
                 x.AddConsumer<EmailConsumer>();
                         
-                x.AddBus(provider => Bus.Factory.CreateUsingRabbitMq(cfg =>
+                x.AddBus(context => Bus.Factory.CreateUsingRabbitMq(cfg =>
                 {
+                    cfg.UseHealthCheck(context);
+                    
                     cfg.Host("rabbitmq://localhost");
                     
                     cfg.ReceiveEndpoint("MailService", ep =>
                     {
                         ep.PrefetchCount = 16;
                         ep.UseMessageRetry(r => r.Interval(2, 100));
-                        ep.ConfigureConsumer<EmailConsumer>(provider);
-                        ep.Bind("MailService");
+                        
+                        ep.ConfigureConsumer<EmailConsumer>(context);
+                        // ep.Bind("MailService");
                     });
                 }));
             });
@@ -74,7 +80,20 @@ namespace MailService
 
             app.UseAuthorization();
             
-            app.UseEndpoints(endpoints => { endpoints.MapRazorPages(); });
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapRazorPages();
+                
+                endpoints.MapHealthChecks("/health/ready", new HealthCheckOptions()
+                {
+                    Predicate = (check) => check.Tags.Contains("ready"),
+                });
+
+                endpoints.MapHealthChecks("/health/live", new HealthCheckOptions()
+                {
+                    Predicate = (_) => false
+                });
+            });
         }
     }
 }

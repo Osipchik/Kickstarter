@@ -20,7 +20,7 @@ namespace MailService.Services
         {
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync("smtp.gmail.com", 587, false);
-            await smtp.AuthenticateAsync(_configuration["Mail:user"], _configuration["Mail:password"]);
+            await smtp.AuthenticateAsync("osipchiktim@gmail.com", "Ti96$zen015");
             await smtp.SendAsync(await _emailFabric.BuildEmailValueTask(context.Message));
             await smtp.DisconnectAsync(true);
         }
