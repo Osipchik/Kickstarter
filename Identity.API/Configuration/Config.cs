@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using IdentityServer4;
 using IdentityServer4.Models;
-using Microsoft.Extensions.Configuration;
 
 namespace Identity.API.Configuration
 {
@@ -21,9 +20,10 @@ namespace Identity.API.Configuration
             new List<ApiResource>
             {
                 new ApiResource("kickstarterGateway", "Kickstarter Gateway"),
-                new ApiResource("company", "Company API"),
-                new ApiResource("funding", "Funding API")
+                new ApiResource("company", "Company API", new List<string>{"role"}),
+                new ApiResource("funding", "Funding API", new List<string>{"role"}),
             };
+        
 //clientIds["JsClientId"] IConfigurationSection clientIds
         public static IEnumerable<Client> Clients()
         {
@@ -39,16 +39,18 @@ namespace Identity.API.Configuration
                     AllowPlainTextPkce = false,
                     RequireClientSecret = false,
                     
+                    AlwaysSendClientClaims = true,
+                    AlwaysIncludeUserClaimsInIdToken = true,
+
                     AllowedScopes =
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        IdentityServerConstants.StandardScopes.Email,
                         IdentityServerConstants.StandardScopes.OfflineAccess,
                         "kickstarterGateway",
                         "company",
                         "funding",
-                        "roles"
+                        "roles",
                     },
                     RedirectUris = { "https://localhost:3000/auth-callback", "https://localhost:3000/silent_renew.html" },
                     PostLogoutRedirectUris = { "https://localhost:3000/" },

@@ -12,6 +12,7 @@ using System.Linq;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
 
 namespace Identity.API
 {
@@ -20,7 +21,7 @@ namespace Identity.API
         public static void Main(string[] args)
         {
             var host = CreateWebHostBuilder(args).Build();
-            // CreateDbIfNotExist(host);
+            CreateDbIfNotExist(host);
             host.Run(); 
         }
 
@@ -30,10 +31,12 @@ namespace Identity.API
             var services = scope.ServiceProvider;
             try
             {
-                var context = services.GetRequiredService<AppDbContext>();
-                var app = services.GetRequiredService<IApplicationBuilder>();
+                // var app = services.GetRequiredService<IApplicationBuilder>();
+                // DbInit.Initialize(app);
                 
-                DbInit.Initialize(app);
+                var context = services.GetRequiredService<AppDbContext>();
+                var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+                DbInit.Initialize(context, roleManager).Wait();
             }
             catch (Exception ex){
                 var logger = services.GetRequiredService<ILogger<Program>>();

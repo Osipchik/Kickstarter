@@ -4,6 +4,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using EventBus.Events;
 using Identity.API.Configuration;
+using Identity.API.Data;
 using Identity.API.Extensions;
 using Identity.API.Models.AccountViewModels;
 using Identity.API.Models.ManageViewModels;
@@ -68,12 +69,15 @@ namespace Identity.API.Controllers
             if (ModelState.IsValid)
             {
                 var user = new ApplicationUser{Email = model.UserName, Name = model.Name, UserName = model.UserName};
+                
                 var result = await _userManager.CreateAsync(user, model.Password);
             
                 if (result.Succeeded)
                 {
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Name, user.Name));
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Email, user.Email));
+                    await _userManager.AddToRoleAsync(user, DbInit.MaiRole);
+                    // await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Role, "Admin"));
                     
                     await SendEmail(user, "ConfirmAccount");
                     

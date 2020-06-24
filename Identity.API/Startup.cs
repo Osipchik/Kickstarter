@@ -63,6 +63,13 @@ namespace Identity.API
                 .AddDefaultTokenProviders();
 
 
+            // services.AddIdentityServer()
+            //     .AddInMemoryIdentityResources(Config.GetResources)
+            //     .AddInMemoryApiResources(Config.GetApis)
+            //     .AddInMemoryClients(Config.Clients())
+            //     .AddAspNetIdentity<ApplicationUser>()
+            //     .AddDeveloperSigningCredential();
+            
             services.AddIdentityServer()
                 .AddDeveloperSigningCredential()
                 .AddAspNetIdentity<ApplicationUser>()
@@ -76,18 +83,7 @@ namespace Identity.API
                     options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
                         sql => sql.MigrationsAssembly(migrationsAssembly));
                 });
-
-            // services.Configure<IdentityOptions>(options =>
-            // {
-            //     options.Password.RequireDigit = false;
-            //     options.Password.RequireLowercase = false;
-            //     options.Password.RequireNonAlphanumeric = false;
-            //     options.Password.RequireUppercase = false;
-            //     options.Password.RequiredLength = 6;
-            //     options.Password.RequiredUniqueChars = 1;
-            //
-            //     options.SignIn.RequireConfirmedEmail = true;
-            // });
+            
 
             services.AddAuthentication()
                 .AddGoogle(options =>
@@ -140,6 +136,8 @@ namespace Identity.API
             
             app.UseAuthentication();
             app.UseAuthorization();
+            
+            
             app.UseIdentityServer();
 
             app.UseSwagger(option => { option.RouteTemplate = "swagger/{documentName}/swagger.json"; });
