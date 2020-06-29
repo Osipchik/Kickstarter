@@ -31,8 +31,6 @@ namespace Identity.API
         {
             services.AddCors();
             
-            services.AddControllersWithViews();
-
             var connectionString = Configuration.GetConnectionString("DefaultConnection");
             var migrationsAssembly = typeof(Startup).GetTypeInfo().Assembly.GetName().Name;
             
@@ -106,6 +104,8 @@ namespace Identity.API
                     options.ClientSecret = Configuration["Authentication:Yandex:ClientSecret"];
                 });
             
+            services.AddControllersWithViews();
+
             services.AddSwaggerGen(x =>
             {
                 x.SwaggerDoc("v1", new OpenApiInfo{Title = "Identity API", Version = "v1"});
@@ -164,7 +164,7 @@ namespace Identity.API
             
             if (!context.Clients.Any())
             {
-                foreach (var client in Config.Clients())
+                foreach (var client in Config.Clients().ToList())
                 {
                     context.Clients.Add(client.ToEntity());
                 }
@@ -173,19 +173,27 @@ namespace Identity.API
             
             if (!context.IdentityResources.Any())
             {
-                foreach (var resource in Config.IdentityResources)
+                foreach (var resource in Config.IdentityResources.ToList())
                 {
                     context.IdentityResources.Add(resource.ToEntity());
                 }
                 context.SaveChanges();
             }
 
-            if (!context.ApiScopes.Any())
+            if (!context.ApiResources.Any())
             {
-                foreach (var resource in Config.ApiScopes)
+                foreach (var resource in Config.ApiScopes.ToList())
                 {
                     context.ApiScopes.Add(resource.ToEntity());
                 }
+                
+                context.SaveChanges();
+                
+                foreach (var resource in Config.ApiResources.ToList())
+                {
+                    context.ApiResources.Add(resource.ToEntity());
+                }
+                
                 context.SaveChanges();
             }
         }

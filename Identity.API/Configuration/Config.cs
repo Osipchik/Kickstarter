@@ -21,12 +21,34 @@ namespace Identity.API.Configuration
                 }
             };
 
+        public static IEnumerable<ApiResource> ApiResources =>
+            new List<ApiResource>
+            {
+                new ApiResource("kickstarterGateway", "kickstarterGateway API")
+                {
+                    Scopes  = {"kickstarterGateway"}
+                },
+                new ApiResource("company", "Company API", new List<string>{ JwtClaimTypes.Role })
+                {
+                    Scopes = {"company", "kickstarterGateway"}
+                },
+                new ApiResource("funding", "Funding API", new List<string>{ JwtClaimTypes.Role })
+                {
+                    Scopes = {"funding"}
+                }
+                // new ApiResource("kickstarterGateway"),
+                // new ApiResource("company", new List<string>{ JwtClaimTypes.Role }),
+                // new ApiResource("funding", new List<string>{ JwtClaimTypes.Role }),
+                // new ApiResource("updates", new List<string>{ JwtClaimTypes.Role }),
+            };
+        
         public static IEnumerable<ApiScope> ApiScopes =>
             new List<ApiScope>
             {
-                new ApiScope("kickstarterGateway", "Kickstarter Gateway"),
-                new ApiScope("company", "Company API", new List<string>{ JwtClaimTypes.Role }),
-                new ApiScope("funding", "Funding API", new List<string>{ "role" }),
+                new ApiScope("kickstarterGateway"),
+                new ApiScope("company", new List<string>{ JwtClaimTypes.Role }),
+                new ApiScope("funding", new List<string>{ JwtClaimTypes.Role }),
+                new ApiScope("updates", new List<string>{ JwtClaimTypes.Role }),
             };
 
 //clientIds["JsClientId"] IConfigurationSection clientIds
@@ -55,10 +77,11 @@ namespace Identity.API.Configuration
                         "kickstarterGateway",
                         "company",
                         "funding",
+                        "updates",
                     },
                     RedirectUris = { "https://localhost:3000/auth-callback", "https://localhost:3000/silent_renew.html" },
                     PostLogoutRedirectUris = { "https://localhost:3000/" },
-                    AllowedCorsOrigins = { "https://localhost:3000    " },
+                    AllowedCorsOrigins = { "https://localhost:3000" },
 
                     AllowOfflineAccess = true,
                     AllowAccessTokensViaBrowser = true
