@@ -9,9 +9,7 @@ namespace Identity.API.Configuration
 
         public static bool ShowLogoutPrompt = false;
         public static bool AutomaticRedirectAfterSignOut = true;
-
-        public static readonly string WindowsAuthenticationSchemeName = Microsoft.AspNetCore.Server.IISIntegration.IISDefaults.AuthenticationScheme;
-
+        
         public static string InvalidCredentialsErrorMessage = "Invalid username or password";
     }
 }

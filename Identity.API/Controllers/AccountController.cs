@@ -77,7 +77,6 @@ namespace Identity.API.Controllers
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Name, user.Name));
                     await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Email, user.Email));
                     await _userManager.AddToRoleAsync(user, DbInit.MaiRole);
-                    // await _userManager.AddClaimAsync(user, new Claim(JwtClaimTypes.Role, "Admin"));
                     
                     await SendEmail(user, "ConfirmAccount");
                     
@@ -141,7 +140,7 @@ namespace Identity.API.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.UserName);
-                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.ClientId));
+                    await _events.RaiseAsync(new UserLoginSuccessEvent(user.UserName, user.Id, user.UserName, clientId: context?.Client.ClientId));
                     
                     var props = new AuthenticationProperties
                     {
@@ -149,11 +148,16 @@ namespace Identity.API.Controllers
                         ExpiresUtc = DateTimeOffset.UtcNow.Add(AccountOptions.RememberMeLoginDuration)
                     };
                     
-                    await HttpContext.SignInAsync(new IdentityServerUser(user.Id) { DisplayName = user.UserName }, props);
+                    var issuer = new IdentityServerUser(user.Id)
+                    {
+                        DisplayName = user.Name
+                    };
+                    
+                    await HttpContext.SignInAsync(issuer, props);
         
                     if (context != null)
                     {
-                        if (await _clientStore.IsPkceClientAsync(context.ClientId))
+                        if (await _clientStore.IsPkceClientAsync(context.Client.ClientId))
                         {
                             return View("Redirect", new RedirectViewModel { RedirectUrl = model.ReturnUrl });
                         }
@@ -173,7 +177,7 @@ namespace Identity.API.Controllers
                     throw new Exception("invalid return URL");
                 }
         
-                await _events.RaiseAsync(new UserLoginFailureEvent(model.UserName, "invalid credentials", clientId:context?.ClientId));
+                await _events.RaiseAsync(new UserLoginFailureEvent(model.UserName, "invalid credentials", clientId:context?.Client.ClientId));
                 ModelState.AddModelError(string.Empty, AccountOptions.InvalidCredentialsErrorMessage);
             }
         
@@ -319,9 +323,7 @@ namespace Identity.API.Controllers
             var schemes = await _schemeProvider.GetAllSchemesAsync();
 
             var providers = schemes
-                .Where(x => x.DisplayName != null ||
-                            x.Name.Equals(AccountOptions.WindowsAuthenticationSchemeName, StringComparison.OrdinalIgnoreCase)
-                )
+                .Where(x => x.DisplayName != null)
                 .Select(x => new ExternalProvider
                 {
                     DisplayName = x.DisplayName ?? x.Name,
@@ -329,16 +331,17 @@ namespace Identity.API.Controllers
                 }).ToList();
 
             var allowLocal = true;
-            if (context?.ClientId != null)
+            if (context?.Client.ClientId != null)
             {
-                var client = await _clientStore.FindEnabledClientByIdAsync(context.ClientId);
+                var client = await _clientStore.FindEnabledClientByIdAsync(context.Client.ClientId);
                 if (client != null)
                 {
                     allowLocal = client.EnableLocalLogin;
 
                     if (client.IdentityProviderRestrictions != null && client.IdentityProviderRestrictions.Any())
                     {
-                        providers = providers.Where(provider => client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme)).ToList();
+                        providers = providers.Where(provider =>
+                            client.IdentityProviderRestrictions.Contains(provider.AuthenticationScheme)).ToList();
                     }
                 }
             }

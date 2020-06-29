@@ -3,6 +3,7 @@ using System.Reflection;
 using Identity.API.Configuration;
 using Identity.API.Data;
 using Identity.API.Models;
+using IdentityServer4;
 using IdentityServer4.EntityFramework.DbContexts;
 using IdentityServer4.EntityFramework.Mappers;
 using MassTransit;
@@ -59,19 +60,11 @@ namespace Identity.API
 
                     options.SignIn.RequireConfirmedEmail = true;
                 })
+                .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-
-
-            // services.AddIdentityServer()
-            //     .AddInMemoryIdentityResources(Config.GetResources)
-            //     .AddInMemoryApiResources(Config.GetApis)
-            //     .AddInMemoryClients(Config.Clients())
-            //     .AddAspNetIdentity<ApplicationUser>()
-            //     .AddDeveloperSigningCredential();
             
             services.AddIdentityServer()
-                .AddDeveloperSigningCredential()
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddConfigurationStore(options =>
                 {
@@ -82,32 +75,41 @@ namespace Identity.API
                 {
                     options.ConfigureDbContext = b => b.UseSqlServer(connectionString,
                         sql => sql.MigrationsAssembly(migrationsAssembly));
-                });
+                    options.EnableTokenCleanup = true;
+                })
+                .AddDeveloperSigningCredential();
             
 
             services.AddAuthentication()
                 .AddGoogle(options =>
                 {
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = Configuration["Authentication:Google:ClientId"];
                     options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
                 })
                 .AddFacebook(options =>
                 {
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = Configuration["Authentication:Facebook:ClientId"];
                     options.ClientSecret = Configuration["Authentication:Facebook:ClientSecret"];
                 })
                 .AddVkontakte(options =>
                 {
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = Configuration["Authentication:VKontakte:ClientId"];
                     options.ClientSecret = Configuration["Authentication:VKontakte:ClientSecret"];
                 })
                 .AddYandex(options =>
                 {
+                    options.SignInScheme = IdentityServerConstants.ExternalCookieAuthenticationScheme;
                     options.ClientId = Configuration["Authentication:Yandex:ClientId"];
                     options.ClientSecret = Configuration["Authentication:Yandex:ClientSecret"];
                 });
             
-            services.AddSwaggerGen(x => { x.SwaggerDoc("v1", new OpenApiInfo{Title = "Identity API", Version = "v1"}); });
+            services.AddSwaggerGen(x =>
+            {
+                x.SwaggerDoc("v1", new OpenApiInfo{Title = "Identity API", Version = "v1"});
+            });
 
         }
 
@@ -127,17 +129,15 @@ namespace Identity.API
 
             dataContext.Database.Migrate();
 
+            app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+
             app.UseHttpsRedirection();
             app.UseStaticFiles();
 
             app.UseRouting();
-
-            app.UseCors(o => o.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
             
             app.UseAuthentication();
             app.UseAuthorization();
-            
-            
             app.UseIdentityServer();
 
             app.UseSwagger(option => { option.RouteTemplate = "swagger/{documentName}/swagger.json"; });
@@ -155,38 +155,38 @@ namespace Identity.API
         
         private static void InitializeDatabase(IApplicationBuilder app)
         {
-            using (var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            var serviceScope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope();
+            
+            serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
+
+            var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
+            context.Database.Migrate();
+            
+            if (!context.Clients.Any())
             {
-                serviceScope.ServiceProvider.GetRequiredService<PersistedGrantDbContext>().Database.Migrate();
-
-                var context = serviceScope.ServiceProvider.GetRequiredService<ConfigurationDbContext>();
-                context.Database.Migrate();
-                if (!context.Clients.Any())
+                foreach (var client in Config.Clients())
                 {
-                    foreach (var client in Config.Clients())
-                    {
-                        context.Clients.Add(client.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.Clients.Add(client.ToEntity());
                 }
-
-                if (!context.IdentityResources.Any())
+                context.SaveChanges();
+            }
+            
+            if (!context.IdentityResources.Any())
+            {
+                foreach (var resource in Config.IdentityResources)
                 {
-                    foreach (var resource in Config.GetResources)
-                    {
-                        context.IdentityResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.IdentityResources.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
+            }
 
-                if (!context.ApiResources.Any())
+            if (!context.ApiScopes.Any())
+            {
+                foreach (var resource in Config.ApiScopes)
                 {
-                    foreach (var resource in Config.GetApis)
-                    {
-                        context.ApiResources.Add(resource.ToEntity());
-                    }
-                    context.SaveChanges();
+                    context.ApiScopes.Add(resource.ToEntity());
                 }
+                context.SaveChanges();
             }
         }
     }

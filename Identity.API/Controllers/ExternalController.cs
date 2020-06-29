@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using Identity.API.Data;
 using Identity.API.Extensions;
 using Identity.API.Models.ManageViewModels;
 using IdentityModel;
+using IdentityServer4;
 using IdentityServer4.Events;
 using IdentityServer4.Services;
 using IdentityServer4.Stores;
@@ -47,7 +49,7 @@ namespace Identity.API.Controllers
         }
 
         [HttpGet]
-        public IActionResult Challenge(string provider, string returnUrl)
+        public IActionResult Challenge(string scheme, string returnUrl)
         {
             if (string.IsNullOrEmpty(returnUrl)) returnUrl = "~/";
 
@@ -62,17 +64,17 @@ namespace Identity.API.Controllers
                 Items =
                 {
                     { "returnUrl", returnUrl },
-                    { "scheme", provider },
+                    { "scheme", scheme },
                 }
             };
 
-            return Challenge(props, provider);
+            return Challenge(props, scheme);
         }
         
         [HttpGet]
         public async Task<IActionResult> Callback()
         {
-            var result = await HttpContext.AuthenticateAsync(IdentityConstants.ExternalScheme);
+            var result = await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             if (result?.Succeeded != true)
             {
                 throw new Exception("External authentication error");
@@ -89,37 +91,37 @@ namespace Identity.API.Controllers
 
             var additionalLocalClaims = new List<Claim>();
             var localSignInProps = new AuthenticationProperties();
-            ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
-            var name = await ClearCookie(user, provider, localSignInProps, additionalLocalClaims);
+            ProcessLoginCallback(result, additionalLocalClaims, localSignInProps);
             
+            var principal = await _signInManager.CreateUserPrincipalAsync(user);
+            additionalLocalClaims.AddRange(principal.Claims);
+            var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.Id;
+            
+            var issuer = new IdentityServerUser(user.Id)
+            {
+                DisplayName = name,
+                IdentityProvider = provider,
+                AdditionalClaims = additionalLocalClaims
+            };
+
+            await HttpContext.SignInAsync(issuer, localSignInProps);
+            await HttpContext.SignOutAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
+
             var returnUrl = result.Properties.Items["returnUrl"] ?? "~/";
 
             var context = await _interaction.GetAuthorizationContextAsync(returnUrl);
-            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.Id, name, true, context?.ClientId));
+            await _events.RaiseAsync(new UserLoginSuccessEvent(provider, providerUserId, user.Id, name, true, context?.Client.ClientId));
 
             if (context != null)
             {
-                if (await _clientStore.IsPkceClientAsync(context.ClientId))
+                if (context.IsNativeClient())
                 {
-                    return View("Redirect", new RedirectViewModel { RedirectUrl = returnUrl });
+                    return this.LoadingPage("Redirect", returnUrl);
                 }
             }
 
             return Redirect(returnUrl);
         }
-
-        private async ValueTask<string> ClearCookie(ApplicationUser user, string provider, AuthenticationProperties localSignInProps, List<Claim> claims)
-        {
-            var principal = await _signInManager.CreateUserPrincipalAsync(user);
-            claims.AddRange(principal.Claims);
-            var name = principal.FindFirst(JwtClaimTypes.Name)?.Value ?? user.Id;
-            
-            await HttpContext.SignInAsync(user.Id, name, provider, localSignInProps, claims.ToArray());
-            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-
-            return name;
-        }
-        
 
         private async Task<(ApplicationUser user, string provider, string providerUserId, IEnumerable<Claim> claims)>
             FindUserFromExternalProviderAsync(AuthenticateResult result)
@@ -143,27 +145,22 @@ namespace Identity.API.Controllers
 
         private async Task<ApplicationUser> AutoProvisionUserAsync(string provider, string providerUserId, IEnumerable<Claim> claims)
         {
-            var (user, userClaims) = CreateUserWithClaims(claims);
-            
-            var identityResult = await _userManager.CreateAsync(user);
-            if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
+            var (user, userClaims) = await CreateUserWithClaims(claims.ToArray());
 
             if (userClaims.Any())
             {
-                identityResult = await _userManager.AddClaimsAsync(user, userClaims);
-                if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
+                await _userManager.AddClaimsAsync(user, userClaims);
             }
 
-            identityResult = await _userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerUserId, provider));
-            if (!identityResult.Succeeded) throw new Exception(identityResult.Errors.First().Description);
+            await _userManager.AddLoginAsync(user, new UserLoginInfo(provider, providerUserId, provider));
 
             return user;
         }
 
-        private (ApplicationUser user, List<Claim> userClaims) CreateUserWithClaims(IEnumerable<Claim> claims)
+        private async Task<(ApplicationUser user, List<Claim> userClaims)> CreateUserWithClaims(Claim[] claims)
         {
             var userClaims = new List<Claim>();
-
+            
             var name = claims.FirstOrDefault(x => x.Type == JwtClaimTypes.Name)?.Value ??
                        claims.FirstOrDefault(x => x.Type == ClaimTypes.Name)?.Value;
             
@@ -203,17 +200,20 @@ namespace Identity.API.Controllers
             
             var user = new ApplicationUser
             {
-                UserName = Guid.NewGuid().ToString(),
+                UserName = email.Split("@")[0],
                 EmailConfirmed = true,
                 Email = email,
                 Name = name,
                 Picture = picture
             };
 
+            await _userManager.CreateAsync(user);
+            await _userManager.AddToRoleAsync(user, DbInit.MaiRole);
+            
             return (user, userClaims);
         }
         
-        private void ProcessLoginCallbackForOidc(AuthenticateResult externalResult, List<Claim> localClaims, AuthenticationProperties localSignInProps)
+        private void ProcessLoginCallback(AuthenticateResult externalResult, List<Claim> localClaims, AuthenticationProperties localSignInProps)
         {
             var sid = externalResult.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.SessionId);
             if (sid != null)
@@ -221,10 +221,10 @@ namespace Identity.API.Controllers
                 localClaims.Add(new Claim(JwtClaimTypes.SessionId, sid.Value));
             }
 
-            var id_token = externalResult.Properties.GetTokenValue("id_token");
-            if (id_token != null)
+            var idToken = externalResult.Properties.GetTokenValue("id_token");
+            if (idToken != null)
             {
-                localSignInProps.StoreTokens(new[] { new AuthenticationToken { Name = "id_token", Value = id_token } });
+                localSignInProps.StoreTokens(new[] { new AuthenticationToken { Name = "id_token", Value = idToken } });
             }
         }
     }

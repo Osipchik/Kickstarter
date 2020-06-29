@@ -6,7 +6,7 @@
 		<a class="social"
 		   asp-controller="External"
 		   asp-action="Challenge"
-		   asp-route-provider="@provider.AuthenticationScheme"
+		   asp-route-scheme="@provider.AuthenticationScheme"
 		   asp-route-returnUrl="@Model.ReturnUrl">
 			@switch (provider.DisplayName)
 			{
